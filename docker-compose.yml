@@ -4,7 +4,7 @@ networks:
   laravel:
 
 services:
-  site:
+  backend:
     build:
       context: .
       dockerfile: nginx.dockerfile
@@ -12,7 +12,7 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ./src:/var/www/html:delegated
+      - ./src/backend:/var/www/html:delegated
     depends_on:
       - php
       - mysql
@@ -42,7 +42,7 @@ services:
       dockerfile: php.dockerfile
     container_name: php
     volumes:
-      - ./src:/var/www/html:delegated
+      - ./src/backend:/var/www/html:delegated
     ports:
       - "9000:9000"
     networks:
@@ -54,7 +54,7 @@ services:
       dockerfile: composer.dockerfile
     container_name: composer
     volumes:
-      - ./src:/var/www/html
+      - ./src/backend:/var/www/html
     working_dir: /var/www/html
     depends_on:
       - php
@@ -63,6 +63,23 @@ services:
       - laravel
     entrypoint: ['composer', '--ignore-platform-reqs']
 
+  frontend:
+    build:
+      context: .
+      dockerfile: node.dockerfile
+    container_name: vue
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./src/frontend/:/app
+      - /app/node_modules
+    depends_on: 
+      - backend
+    ports:
+      - "8081:8080"
+    networks:
+      - laravel
+  
   npm:
     image: node:13.7
     container_name: npm
@@ -77,7 +94,7 @@ services:
       dockerfile: php.dockerfile
     container_name: artisan
     volumes:
-      - ./src:/var/www/html:delegated
+      - ./src/backend:/var/www/html:delegated
     depends_on:
       - mysql
     working_dir: /var/www/html
